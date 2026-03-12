@@ -55,6 +55,12 @@ public:
     }
     return humidity;
   }
+
+  void update() {
+    if (shouldReadSensor()) {
+      readSensor();
+    }
+  }
 };
 
 /*
@@ -72,28 +78,22 @@ public:
     lcd.begin(columns, rows);
   }
 
-  void displayTemperatureHumidity(int temp, int humidity) {
+  void displayAll(int temp, int humidity, const char* state) {
     lcd.clear();
     
-    // First line: Temperature
+    // First line: Temperature and State
     lcd.setCursor(0, 0);
-    lcd.print("Temp: ");
+    lcd.print("Tmp:");
     lcd.print(temp);
-    lcd.print((char)223); // Degree symbol
-    lcd.print("C");
+    lcd.print((char)223);
+    lcd.print("C ");
+    lcd.print(state);
     
     // Second line: Humidity
     lcd.setCursor(0, 1);
     lcd.print("Humidity: ");
     lcd.print(humidity);
     lcd.print("%");
-  }
-
-  void displayState(const char* state) {
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("State: ");
-    lcd.print(state);
   }
 };
 
@@ -181,37 +181,37 @@ public:
   StateHandler(SerialMonitorHandler &serialRef, StackLight &stackLightRef, LCDDisplay &lcdRef) 
     : serialMonitor(serialRef), stackLight(stackLightRef), lcdDisplay(lcdRef) {}
 
-  void analiseState(int temp, int humidity) {
+  void analyseState(int temp, int humidity) {
     if(temp >= 30) {
-      redAlert();
+      redAlert(temp, humidity);
       return;
     }
     if(temp >= 25 && humidity < 20) {
-      yellowOperation();
+      yellowOperation(temp, humidity);
       return;
     }
-    if(temp < 30) {
-      greenOperation();
+    if(temp < 25 || humidity >= 20) { 
+      greenOperation(temp, humidity);
       return;
     }
   }
 
-  void greenOperation() {
+  void greenOperation(int temp, int humidity) {
     stackLight.setGreenLightOn();
     serialMonitor.printState(1);
-    lcdDisplay.displayState("Normal");
+    lcdDisplay.displayAll(temp, humidity, "Normal");
   }
 
-  void yellowOperation() {
+  void yellowOperation(int temp, int humidity) {
     stackLight.setYellowLightOn();
     serialMonitor.printState(2);
-    lcdDisplay.displayState("Warning");
+    lcdDisplay.displayAll(temp, humidity, "Warning");
   }
 
-  void redAlert() {
+  void redAlert(int temp, int humidity) {
     stackLight.setRedLightOn();
     serialMonitor.printState(3);
-    lcdDisplay.displayState("ALERT!");
+    lcdDisplay.displayAll(temp, humidity, "ALERT!");
   }
 };
 
@@ -236,11 +236,10 @@ void loop() {
   static unsigned long lastSensorRead = 0;
   if(currentMillis - lastSensorRead >= 2000) {
     lastSensorRead = currentMillis;
-    
+    dhtRead.update();
     int temperature = dhtRead.getTemperature();
     int humidity = dhtRead.getHumidity();
-    stateHandler.analiseState(temperature, humidity);
-    lcdDisplay.displayTemperatureHumidity(temperature, humidity);
+    stateHandler.analyseState(temperature, humidity);
     serialMonitor.printSensorValues(temperature, humidity);
   }
 }
