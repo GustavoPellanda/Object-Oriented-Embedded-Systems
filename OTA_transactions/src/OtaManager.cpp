@@ -32,7 +32,7 @@ void OtaManager::downloadAndFlash() {
   http.begin(_firmwareUrl);
   http.setTimeout(30000);
 
-  // Checks if the firmware is available:
+  // Checks if GET request was successful:
   if (http.GET() != HTTP_CODE_OK) {
     Serial.println("[OTA] Failed to download firmware.");
     http.end();
