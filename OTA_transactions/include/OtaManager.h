@@ -30,6 +30,10 @@ private:
      Prints progress percentage to Serial. */
   void streamToFlash(HTTPClient& http, int totalBytes);
 
+  /* Compares two version strings.
+     Returns a positive value if 'a' is newer than 'b', zero if they are equal, and a negative value otherwise. */
+  static int compareVersions(const char* a, const char* b);
+
 public:
   OtaManager(const char* versionUrl, const char* firmwareUrl, const char* currentVersion)
     : _versionUrl(versionUrl),
