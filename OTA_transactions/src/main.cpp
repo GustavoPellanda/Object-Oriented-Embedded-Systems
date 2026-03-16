@@ -1,18 +1,38 @@
+#include "app_config.h"
+#include "OtaManager.h"
 #include <Arduino.h>
+#include <WiFi.h>
 
-// put function declarations here:
-int myFunction(int, int);
+#define MSG "Hello from firmware 1.0.0!"
+
+OtaManager otaManager(VERSION_URL, FIRMWARE_URL, APP_VERSION);
+unsigned long lastOtaCheck = 0;
+
+void connectWifi() {
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  Serial.print("Connecting to Wi-Fi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.printf("\nConnected! IP: %s\n", WiFi.localIP().toString().c_str());
+}
 
 void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+  Serial.begin(9600);
+  Serial.printf("\n=== Firmware v%s ===\n", APP_VERSION);
+  connectWifi();
+  otaManager.check();
+  lastOtaCheck = millis();
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
-}
+  Serial.println(MSG);
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+  if (millis() - lastOtaCheck >= OTA_INTERVAL) {
+    otaManager.check();
+    lastOtaCheck = millis();
+  }
+
+  delay(3000);
 }
