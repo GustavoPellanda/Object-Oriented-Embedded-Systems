@@ -243,10 +243,11 @@ of temperature in °C and humidity in relative percentage.
 */
 dht DHT;
 DHTRead dhtRead(8, DHT);
+DCMotorController dcMotor(9);
 SerialMonitorHandler serialMonitor;
 StackLight stackLight(12, 11, 10);
 LCDDisplay lcdDisplay(7, 6, 5, 4, 3, 2);
-StateHandler stateHandler(serialMonitor, stackLight, lcdDisplay);
+StateHandler stateHandler(serialMonitor, stackLight, lcdDisplay, dcMotor);
 
 void setup() {
   Serial.begin(9600);
